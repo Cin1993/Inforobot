@@ -129,8 +129,6 @@ public class Crawler_3 {
 											}
 										}
 										s2 = s2.replaceAll("\\\\", "\\\\\\\\");
-//										System.out
-//												.println("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
 										try {
 											pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
 											classification();
@@ -278,6 +276,5 @@ public class Crawler_3 {
 			e.printStackTrace();
 			DBUtil.closeConn(rs, ps, conn);
 		}
-
 	}
 }
