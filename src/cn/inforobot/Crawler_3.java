@@ -18,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import cn.inforobot.dao.Dao;
@@ -27,7 +28,7 @@ import cn.inforobot.pojo.Host_configure;
 public class Crawler_3 {
 	private static Dao dao = new Dao();
 	public static void main(String[] args) {
-		//System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
 		List<Host_configure> host_configure = dao.getHostConfigure();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -51,8 +52,8 @@ public class Crawler_3 {
 			for (int k = 0; k < keywordlist.size(); k++) {
 				//搜索网站的循环
 				for (int i = 0; i < host_configure.size(); i++) {
-					//WebDriver driver = new ChromeDriver();
-					WebDriver driver = new FirefoxDriver();
+					WebDriver driver = new ChromeDriver();
+					//WebDriver driver = new FirefoxDriver();
 					String url = host_configure.get(i).getSearch_box_url() + keywordlist.get(k);
 					driver.get(url);
 					Document doc0 = Jsoup.parse(driver.getPageSource());
@@ -71,8 +72,8 @@ public class Crawler_3 {
 						Iterator<Element> listIterator = es.iterator();
 						String temp = "";
 						String goods_url = "";
-						//WebDriver goods_driver = new ChromeDriver();
-						WebDriver goods_driver = new FirefoxDriver();
+						WebDriver goods_driver = new ChromeDriver();
+						//WebDriver goods_driver = new FirefoxDriver();
 						while (listIterator.hasNext()) {
 							String detail = "";
 							Element e = listIterator.next();
@@ -131,7 +132,9 @@ public class Crawler_3 {
 										s2 = s2.replaceAll("\\\\", "\\\\\\\\");
 										try {
 											pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
+											System.out.println("插入数据完毕");
 											classification();
+											System.out.println("分类解析完成");
 										} catch (Exception e2) {
 											// TODO: handle exception
 											e2.printStackTrace();
@@ -213,8 +216,8 @@ public class Crawler_3 {
 	// 获取搜索结果页面的html代码
 	public static String getSourcecode(String searchurl) {
 		String sourcecode = "";
-		//WebDriver driver = new ChromeDriver();
-		WebDriver driver = new FirefoxDriver();
+		WebDriver driver = new ChromeDriver();
+		//WebDriver driver = new FirefoxDriver();
 		driver.get(searchurl);
 		sourcecode = driver.getPageSource();
 		driver.quit();
@@ -224,8 +227,8 @@ public class Crawler_3 {
 
 	public static Document getGoodsPageCode(String url) {
 		Document goods_doc = null;
-		//WebDriver driver = new ChromeDriver();
-		WebDriver driver = new FirefoxDriver();
+		WebDriver driver = new ChromeDriver();
+		//WebDriver driver = new FirefoxDriver();
 		driver.get(url);
 		goods_doc = Jsoup.parse(driver.getPageSource());
 		driver.quit();
@@ -247,7 +250,7 @@ public class Crawler_3 {
 				set.add(rs.getString(1));
 			}
 			//System.out.println("replace into watch_price (uid,keyword,target_price,requirement) value('"+uid+"','"+keyword+"','"+requirement+"','"+target_price+"')");
-			rs=ps.executeQuery("select * from goods where isnull(class_name)");
+			rs=ps.executeQuery("select class_data,url from goods where isnull(class_name)");
 			while(rs.next()){
 				String s=rs.getString("class_data");
 				String url=rs.getString("url");
