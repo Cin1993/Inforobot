@@ -28,7 +28,7 @@ import cn.inforobot.pojo.Host_configure;
 public class Crawler_3 {
 	private static Dao dao = new Dao();
 	public static void main(String[] args) {
-		System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
+		//System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
 		List<Host_configure> host_configure = dao.getHostConfigure();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -46,20 +46,19 @@ public class Crawler_3 {
 			while (rs.next()) {
 				map.put(rs.getString(3), rs.getString(5));
 			}
-			System.out.println(map);
 			ArrayList<String> keywordlist = getKeyword();
 			//关键词循环
 			for (int k = 0; k < keywordlist.size(); k++) {
 				//搜索网站的循环
 				for (int i = 0; i < host_configure.size(); i++) {
-					WebDriver driver = new ChromeDriver();
-					//WebDriver driver = new FirefoxDriver();
+					//WebDriver driver = new ChromeDriver();
+					WebDriver driver = new FirefoxDriver();
 					String url = host_configure.get(i).getSearch_box_url() + keywordlist.get(k);
 					driver.get(url);
 					Document doc0 = Jsoup.parse(driver.getPageSource());
 					Element nextpage = doc0.select("a[id=pagnNextLink]").first();
-					System.out.println(nextpage);
 					//翻页
+					int good_amount = 1;
 					while (!(nextpage.toString() == null || nextpage.toString().equals(""))) {
 						driver.get(url);
 						Document doc = Jsoup.parse(driver.getPageSource());
@@ -72,8 +71,8 @@ public class Crawler_3 {
 						Iterator<Element> listIterator = es.iterator();
 						String temp = "";
 						String goods_url = "";
-						WebDriver goods_driver = new ChromeDriver();
-						//WebDriver goods_driver = new FirefoxDriver();
+						//WebDriver goods_driver = new ChromeDriver();
+						WebDriver goods_driver = new FirefoxDriver();
 						while (listIterator.hasNext()) {
 							String detail = "";
 							Element e = listIterator.next();
@@ -83,6 +82,7 @@ public class Crawler_3 {
 								goods_url = temp.split("href=\"")[1].split("\"")[0];
 								if ((goods_url.startsWith("http://") || goods_url.startsWith("https://"))
 										&& goods_url.toLowerCase().contains(keywordlist.get(k))) {
+									System.out.println("正在抓取第"+good_amount+"个商品");
 									System.out.println(goods_url);
 									// 存放商品图片的url
 									String img_url = e.select("img[src]").first().toString();
@@ -139,6 +139,7 @@ public class Crawler_3 {
 											// TODO: handle exception
 											e2.printStackTrace();
 										}
+										good_amount++;
 								}
 							}
 
@@ -216,8 +217,8 @@ public class Crawler_3 {
 	// 获取搜索结果页面的html代码
 	public static String getSourcecode(String searchurl) {
 		String sourcecode = "";
-		WebDriver driver = new ChromeDriver();
-		//WebDriver driver = new FirefoxDriver();
+		//WebDriver driver = new ChromeDriver();
+		WebDriver driver = new FirefoxDriver();
 		driver.get(searchurl);
 		sourcecode = driver.getPageSource();
 		driver.quit();
@@ -227,8 +228,8 @@ public class Crawler_3 {
 
 	public static Document getGoodsPageCode(String url) {
 		Document goods_doc = null;
-		WebDriver driver = new ChromeDriver();
-		//WebDriver driver = new FirefoxDriver();
+		//WebDriver driver = new ChromeDriver();
+		WebDriver driver = new FirefoxDriver();
 		driver.get(url);
 		goods_doc = Jsoup.parse(driver.getPageSource());
 		driver.quit();
@@ -249,24 +250,18 @@ public class Crawler_3 {
 			while(rs.next()){
 				set.add(rs.getString(1));
 			}
-			//System.out.println("replace into watch_price (uid,keyword,target_price,requirement) value('"+uid+"','"+keyword+"','"+requirement+"','"+target_price+"')");
 			rs=ps.executeQuery("select class_data,url from goods where isnull(class_name)");
 			while(rs.next()){
 				String s=rs.getString("class_data");
 				String url=rs.getString("url");
-				System.out.println(url);
 				for(String x:set){
-					System.out.println(x);
 					if(!x.contains("&")){
-						System.out.println(s);
 						while(s.contains("&")&&s.contains("›")){
 							s=s.substring(s.indexOf("›")+1);
-							System.out.println(s);
 						}
 					}
 					if(s.contains(x)){
 						ps1.execute("update goods set class_name='"+x+"' where url='"+url+"'");
-						System.out.println("vvvvvv");
 						break;
 					}
 				}
