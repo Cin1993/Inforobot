@@ -1,15 +1,10 @@
 package cn.inforobot;
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import cn.inforobot.dao.Dao;
 import cn.inforobot.download.DownLoader;
 import cn.inforobot.pojo.Host_configure;
@@ -36,7 +31,7 @@ public class getPageUrl {
 				
 				s = doc.select("h2[id=s-result-count]").text();
 				s = s.split(" of")[0].split("-")[1];
-				int page = Integer.valueOf(s.replaceAll(",", ""));
+				//int page = Integer.valueOf(s.replaceAll(",", ""));
 				System.out.println(s);
 				//System.out.println(s);
 				
