@@ -58,14 +58,16 @@ public class Crawler_3 {
 					Element nextpage = doc0.select("a[id=pagnNextLink]").first();
 					//翻页
 					int good_amount = 1;
-					while (!(nextpage.toString() == null || nextpage.toString().equals(""))) {
+					while (!(nextpage == null || nextpage.toString().equals(""))) {
 						driver.get(url);
 						Document doc = Jsoup.parse(driver.getPageSource());
 						doc.select("script").remove();
 						Elements es = doc.select("ul[id=s-results-list-atf]>li");
 						nextpage = doc.select("a[id=pagnNextLink]").first();
-						url = nextpage.toString().split("href=\"")[1].split("\"")[0];
-						url = "http://www.amazon.com" + url;
+						if (!(nextpage == null || nextpage.toString().equals(""))){
+							url = nextpage.toString().split("href=\"")[1].split("\"")[0];
+							url = "http://www.amazon.com" + url;
+						}
 						// 存放商品的url
 						Iterator<Element> listIterator = es.iterator();
 						String temp = "";
@@ -81,7 +83,7 @@ public class Crawler_3 {
 								goods_url = temp.split("href=\"")[1].split("\"")[0];
 								if ((goods_url.startsWith("http://") || goods_url.startsWith("https://"))
 										&& goods_url.toLowerCase().contains(keywordlist.get(k))) {
-									System.out.println("正在抓取第"+good_amount+"个商品");
+									System.out.println("**********the goods is number: "+good_amount+"**********");
 									System.out.println(goods_url);
 									// 存放商品图片的url
 									String img_url = e.select("img[src]").first().toString();
@@ -131,9 +133,9 @@ public class Crawler_3 {
 										s2 = s2.replaceAll("\\\\", "\\\\\\\\");
 										try {
 											pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
-											System.out.println("插入数据完毕");
+											System.out.println("******insert data has finished******");
 											classification();
-											System.out.println("分类解析完成");
+											System.out.println("******get the attribute has finished******");
 										} catch (Exception e2) {
 											// TODO: handle exception
 											e2.printStackTrace();
@@ -151,6 +153,7 @@ public class Crawler_3 {
 			}
 			DBUtil.closeConn(rs, pstmt, conn);
 			classification();
+			System.out.println("-----------------END-----------------");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -268,7 +271,6 @@ public class Crawler_3 {
 			}
 			ps1=null;
 			DBUtil.closeConn(rs, ps, conn);
-			
 		}catch(Exception e){
 			e.printStackTrace();
 			DBUtil.closeConn(rs, ps, conn);
