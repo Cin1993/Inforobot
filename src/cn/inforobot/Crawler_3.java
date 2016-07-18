@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,8 +25,10 @@ import cn.inforobot.pojo.Host_configure;
 
 public class Crawler_3 {
 	private static Dao dao = new Dao();
+
 	public static void main(String[] args) {
-		//System.setProperty("webdriver.chrome.driver", "C:\\chromedriver.exe");
+		// System.setProperty("webdriver.chrome.driver",
+		// "C:\\chromedriver.exe");
 		List<Host_configure> host_configure = dao.getHostConfigure();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -45,18 +46,18 @@ public class Crawler_3 {
 			while (rs.next()) {
 				map.put(rs.getString(3), rs.getString(5));
 			}
-			ArrayList<String> keywordlist = getKeyword();
-			//关键词循环
-			for (int k = 0; k < keywordlist.size(); k++) {
-				//搜索网站的循环
+			//获取首次抓取的关键词
+			String keyword = getKeyword();
+			// 搜索网站的循环
+			while (!keyword.equals("")) {
 				for (int i = 0; i < host_configure.size(); i++) {
-					//WebDriver driver = new ChromeDriver();
+					// WebDriver driver = new ChromeDriver();
 					WebDriver driver = new FirefoxDriver();
-					String url = host_configure.get(i).getSearch_box_url() + keywordlist.get(k);
+					String url = host_configure.get(i).getSearch_box_url() + keyword;
 					driver.get(url);
 					Document doc0 = Jsoup.parse(driver.getPageSource());
 					Element nextpage = doc0.select("a[id=pagnNextLink]").first();
-					//翻页
+					// 翻页
 					int good_amount = 1;
 					while (!(nextpage == null || nextpage.toString().equals(""))) {
 						driver.get(url);
@@ -64,7 +65,7 @@ public class Crawler_3 {
 						doc.select("script").remove();
 						Elements es = doc.select("ul[id=s-results-list-atf]>li");
 						nextpage = doc.select("a[id=pagnNextLink]").first();
-						if (!(nextpage == null || nextpage.toString().equals(""))){
+						if (!(nextpage == null || nextpage.toString().equals(""))) {
 							url = nextpage.toString().split("href=\"")[1].split("\"")[0];
 							url = "http://www.amazon.com" + url;
 						}
@@ -72,7 +73,7 @@ public class Crawler_3 {
 						Iterator<Element> listIterator = es.iterator();
 						String temp = "";
 						String goods_url = "";
-						//WebDriver goods_driver = new ChromeDriver();
+						// WebDriver goods_driver = new ChromeDriver();
 						WebDriver goods_driver = new FirefoxDriver();
 						while (listIterator.hasNext()) {
 							String detail = "";
@@ -82,26 +83,27 @@ public class Crawler_3 {
 							if (temp.contains("href=\"")) {
 								goods_url = temp.split("href=\"")[1].split("\"")[0];
 								if ((goods_url.startsWith("http://") || goods_url.startsWith("https://"))
-										&& goods_url.toLowerCase().contains(keywordlist.get(k))) {
-									System.out.println("**********the goods is number: "+good_amount+"**********");
+										&& goods_url.toLowerCase().contains(keyword)) {
+									System.out.println("**********the goods is number: " + good_amount + "**********");
 									System.out.println(goods_url);
 									// 存放商品图片的url
 									String img_url = e.select("img[src]").first().toString();
 									System.out.println(img_url);
 									img_url = img_url.split("src=\"")[1].split("\"")[0];
-									
-									//延时设置
-									//java.util.concurrent.TimeUnit.SECONDS.sleep((int) (Math.random() * 3 + 2));
-									
-									//跳转到商品页面
+
+									// 延时设置
+									// java.util.concurrent.TimeUnit.SECONDS.sleep((int)
+									// (Math.random() * 3 + 2));
+
+									// 跳转到商品页面
 									goods_driver.navigate().to(goods_url);
 									String goodssrc = goods_driver.getPageSource();
 									Document doc_goods = Jsoup.parse(goodssrc);
-									
-									//goods_map.clear();
-									goods_map = getDetail(map, doc_goods, keywordlist.get(k));
+
+									// goods_map.clear();
+									goods_map = getDetail(map, doc_goods, keyword);
 									goods_map.put("src", goodssrc);
-									//获取商品的状况（新旧商品）
+									// 获取商品的状况（新旧商品）
 									if (goods_map.get("condition") != null) {
 										if (goods_map.get("condition").contains("new"))
 											goods_map.put("condition", "used");
@@ -111,36 +113,36 @@ public class Crawler_3 {
 									} else {
 										goods_map.put("condition", "new");
 									}
-										detail = goods_map.get("detail") + goods_map.get("title");
-										detail = detail.toUpperCase();
-						
-										goods_map.put("url", goods_url);
-										goods_map.put("img_url", img_url);
+									detail = goods_map.get("detail") + goods_map.get("title");
+									detail = detail.toUpperCase();
 
-										String s1 = "";
-										String s2 = "";
-										Iterator<Map.Entry<String, String>> entries = goods_map.entrySet().iterator();
-										while (entries.hasNext()) {
-											Map.Entry<String, String> entry = entries.next();
-											if (entries.hasNext()) {
-												s1 = s1 + "`" + entry.getKey() + "`" + ", ";
-												s2 = s2 + "'" + entry.getValue().replaceAll("'", "''") + "', ";
-											} else {
-												s1 = s1 + "`" + entry.getKey() + "`";
-												s2 = s2 + "'" + entry.getValue().replaceAll("'", "''") + "'";
-											}
+									goods_map.put("url", goods_url);
+									goods_map.put("img_url", img_url);
+
+									String s1 = "";
+									String s2 = "";
+									Iterator<Map.Entry<String, String>> entries = goods_map.entrySet().iterator();
+									while (entries.hasNext()) {
+										Map.Entry<String, String> entry = entries.next();
+										if (entries.hasNext()) {
+											s1 = s1 + "`" + entry.getKey() + "`" + ", ";
+											s2 = s2 + "'" + entry.getValue().replaceAll("'", "''") + "', ";
+										} else {
+											s1 = s1 + "`" + entry.getKey() + "`";
+											s2 = s2 + "'" + entry.getValue().replaceAll("'", "''") + "'";
 										}
-										s2 = s2.replaceAll("\\\\", "\\\\\\\\");
-										try {
-											pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
-											System.out.println("******insert data has finished******");
-											classification();
-											System.out.println("******get the attribute has finished******");
-										} catch (Exception e2) {
-											// TODO: handle exception
-											e2.printStackTrace();
-										}
-										good_amount++;
+									}
+									s2 = s2.replaceAll("\\\\", "\\\\\\\\");
+									try {
+										pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
+										System.out.println("******insert data has finished******");
+										classification();
+										System.out.println("******get the attribute has finished******");
+									} catch (Exception e2) {
+										// TODO: handle exception
+										e2.printStackTrace();
+									}
+									good_amount++;
 								}
 							}
 
@@ -150,9 +152,12 @@ public class Crawler_3 {
 					}
 					driver.quit();
 				}
+				pstmt.execute("UPDATE keyword SET state='Y' WHERE key_word = '" + keyword + "'");
+				DBUtil.closeConn(rs, pstmt, conn);
+				classification();
+				//获取关键词用于判断是否有新的关键词需要抓取
+				keyword = getKeyword();
 			}
-			DBUtil.closeConn(rs, pstmt, conn);
-			classification();
 			System.out.println("-----------------END-----------------");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -161,65 +166,61 @@ public class Crawler_3 {
 	}
 
 	public static Map<String, String> getDetail(Map<String, String> map, Document doc_goods, String key_word) {
-		
+
 		Map<String, String> info_map = new HashMap<String, String>();
-			System.out.println(doc_goods.select("ul[class=a-horizontal a-size-small]>li").text());
-			for (Map.Entry<String, String> entry : map.entrySet()) {
-				Elements es = doc_goods.select(entry.getValue());
-				info_map.put(entry.getKey(), es.text().replaceAll("'", "''"));
-			}
-			System.out.println(info_map);
+		System.out.println(doc_goods.select("ul[class=a-horizontal a-size-small]>li").text());
+		for (Map.Entry<String, String> entry : map.entrySet()) {
+			Elements es = doc_goods.select(entry.getValue());
+			info_map.put(entry.getKey(), es.text().replaceAll("'", "''"));
+		}
+		System.out.println(info_map);
 		return info_map;
 	}
 
-	/*public static Set<String> getclassattribute(String classname) {
-		ResultSet rs = null;
-		PreparedStatement pstmt = null;
-		Connection conn = null;
-		// 杩炴帴test鏁版嵁搴�
-		conn = DBUtil.getConn("test");
-		Set<String> classattribute = new HashSet<String>();
-		try {
-			pstmt = conn.prepareStatement("");
-			rs = pstmt.executeQuery("select * from class_attribute where class = '" + classname + "'");
-			while (rs.next()) {
-				classattribute.add(rs.getString(2));
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		DBUtil.closeConn(rs, pstmt, conn);
-		return classattribute;
-	}*/
-
 	// 获取搜索关键词
-	public static ArrayList<String> getKeyword() {
-		ArrayList<String> keywordlist = new ArrayList<String>();
+	/*
+	 * public static ArrayList<String> getKeyword() { ArrayList<String>
+	 * keywordlist = new ArrayList<String>(); ResultSet rs = null;
+	 * PreparedStatement pstmt = null; Connection conn = null; // 连接test数据库 conn
+	 * = DBUtil.getConn("info_rob"); String sql =
+	 * "select * from keyword where state='Y'"; try { pstmt =
+	 * conn.prepareStatement(""); rs = pstmt.executeQuery(sql); while
+	 * (rs.next()) { keywordlist.add(rs.getString(1)); } } catch (SQLException
+	 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
+	 * DBUtil.closeConn(rs, pstmt, conn); return keywordlist; }
+	 */
+	
+	// 获取搜索关键词 version2，只获取1个关键词
+	public static String getKeyword() {
+		String keyword = "";
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		Connection conn = null;
 		// 连接test数据库
 		conn = DBUtil.getConn("info_rob");
-		String sql = "select * from keyword where state='Y'";
+		String sql = "select * from keyword where isnull(state)";
 		try {
 			pstmt = conn.prepareStatement("");
 			rs = pstmt.executeQuery(sql);
-			while (rs.next()) {
-				keywordlist.add(rs.getString(1));
+			if (rs.next()) {
+				keyword = rs.getString(1);
+			}
+			if (!keyword.equals("")) {
+				sql = "UPDATE keyword SET state='R' WHERE key_word = '" + keyword + "'";
+				pstmt.execute(sql);
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		DBUtil.closeConn(rs, pstmt, conn);
-		return keywordlist;
+		return keyword;
 	}
 
 	// 获取搜索结果页面的html代码
 	public static String getSourcecode(String searchurl) {
 		String sourcecode = "";
-		//WebDriver driver = new ChromeDriver();
+		// WebDriver driver = new ChromeDriver();
 		WebDriver driver = new FirefoxDriver();
 		driver.get(searchurl);
 		sourcecode = driver.getPageSource();
@@ -230,7 +231,7 @@ public class Crawler_3 {
 
 	public static Document getGoodsPageCode(String url) {
 		Document goods_doc = null;
-		//WebDriver driver = new ChromeDriver();
+		// WebDriver driver = new ChromeDriver();
 		WebDriver driver = new FirefoxDriver();
 		driver.get(url);
 		goods_doc = Jsoup.parse(driver.getPageSource());
@@ -238,40 +239,40 @@ public class Crawler_3 {
 		System.out.println("获取商品详情页代码成功");
 		return goods_doc;
 	}
-	
-	public static void classification(){
-		Connection conn=DBUtil.getConn("info_rob");
-		PreparedStatement ps=null;
-		PreparedStatement ps1=null;
-		ResultSet rs=null;
-		Set<String> set=new HashSet<String>();
-		try{
-			ps=conn.prepareStatement("");
-			ps1=conn.prepareStatement("");
-			rs=ps.executeQuery("select distinct class from class_attribute");
-			while(rs.next()){
+
+	public static void classification() {
+		Connection conn = DBUtil.getConn("info_rob");
+		PreparedStatement ps = null;
+		PreparedStatement ps1 = null;
+		ResultSet rs = null;
+		Set<String> set = new HashSet<String>();
+		try {
+			ps = conn.prepareStatement("");
+			ps1 = conn.prepareStatement("");
+			rs = ps.executeQuery("select distinct class from class_attribute");
+			while (rs.next()) {
 				set.add(rs.getString(1));
 			}
-			rs=ps.executeQuery("select class_data,url from goods where isnull(class_name)");
-			while(rs.next()){
-				String s=rs.getString("class_data");
-				String url=rs.getString("url");
-				for(String x:set){
-					if(!x.contains("&")){
-						while(s.contains("&")&&s.contains("›")){
-							s=s.substring(s.indexOf("›")+1);
+			rs = ps.executeQuery("select class_data,url from goods where isnull(class_name)");
+			while (rs.next()) {
+				String s = rs.getString("class_data");
+				String url = rs.getString("url");
+				for (String x : set) {
+					if (!x.contains("&")) {
+						while (s.contains("&") && s.contains("›")) {
+							s = s.substring(s.indexOf("›") + 1);
 						}
 					}
-					if(s.contains(x)){
-						ps1.execute("update goods set class_name='"+x+"' where url='"+url+"'");
+					if (s.contains(x)) {
+						ps1.execute("update goods set class_name='" + x + "' where url='" + url + "'");
 						break;
 					}
 				}
-				
+
 			}
-			ps1=null;
+			ps1 = null;
 			DBUtil.closeConn(rs, ps, conn);
-		}catch(Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 			DBUtil.closeConn(rs, ps, conn);
 		}
