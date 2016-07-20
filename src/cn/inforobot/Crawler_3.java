@@ -253,7 +253,7 @@ public class Crawler_3 {
 			while (rs.next()) {
 				set.add(rs.getString(1));
 			}
-			rs = ps.executeQuery("select class_data,url from goods where isnull(class_name)");
+			rs = ps.executeQuery("select class_data,url from goods where isnull(class_name) or class_name='unknown_class' or class_name=''");
 			while (rs.next()) {
 				String s = rs.getString("class_data");
 				String url = rs.getString("url");
