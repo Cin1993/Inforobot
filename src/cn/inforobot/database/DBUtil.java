@@ -15,16 +15,16 @@ import java.sql.SQLException;
 //Program start
 public class DBUtil {
     
-//    private final static String DRIVER_CLASS="com.mysql.jdbc.Driver";//数据库驱动名
-//    private final static String CONN_STR="jdbc:mysql://localhost:3306";//数据库连接名
-//    private final static String DB_USER="root";//数据库用户名
-//    private final static String DB_PWD="RobotGo!";//数据库密码
-    
-    
-	private final static String DRIVER_CLASS="com.mysql.jdbc.Driver";//数据库驱动名
-    private final static String CONN_STR="jdbc:mysql://107.180.75.193:3306";//数据库连接名
+    private final static String DRIVER_CLASS="com.mysql.jdbc.Driver";//数据库驱动名
+    private final static String CONN_STR="jdbc:mysql://localhost:3306";//数据库连接名
     private final static String DB_USER="root";//数据库用户名
-    private final static String DB_PWD="USAGo!";//数据库密码
+    private final static String DB_PWD="zx980635254";//数据库密码
+    
+    
+//	private final static String DRIVER_CLASS="com.mysql.jdbc.Driver";//数据库驱动名
+//    private final static String CONN_STR="jdbc:mysql://107.180.75.193:3306";//数据库连接名
+//    private final static String DB_USER="root";//数据库用户名
+//    private final static String DB_PWD="USAGo!";//数据库密码
     
     /*private final static String DRIVER_CLASS="com.mysql.jdbc.Driver";//数据库驱动名
     private final static String CONN_STR="jdbc:mysql://121.41.55.91:3306";//数据库连接名

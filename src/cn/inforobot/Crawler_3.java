@@ -27,8 +27,8 @@ public class Crawler_3 {
 	private static Dao dao = new Dao();
 
 	public static void main(String[] args) {
-		// System.setProperty("webdriver.chrome.driver",
-		// "C:\\chromedriver.exe");
+		//System.setProperty("webdriver.chrome.driver",
+		//"C:\\chromedriver.exe");
 		List<Host_configure> host_configure = dao.getHostConfigure();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -51,7 +51,7 @@ public class Crawler_3 {
 			// 搜索网站的循环
 			while (!keyword.equals("")) {
 				for (int i = 0; i < host_configure.size(); i++) {
-					// WebDriver driver = new ChromeDriver();
+					//WebDriver driver = new ChromeDriver();
 					WebDriver driver = new FirefoxDriver();
 					String url = host_configure.get(i).getSearch_box_url() + keyword;
 					driver.get(url);
@@ -73,7 +73,7 @@ public class Crawler_3 {
 						Iterator<Element> listIterator = es.iterator();
 						String temp = "";
 						String goods_url = "";
-						// WebDriver goods_driver = new ChromeDriver();
+						//WebDriver goods_driver = new ChromeDriver();
 						WebDriver goods_driver = new FirefoxDriver();
 						while (listIterator.hasNext()) {
 							String detail = "";
@@ -220,7 +220,7 @@ public class Crawler_3 {
 	// 获取搜索结果页面的html代码
 	public static String getSourcecode(String searchurl) {
 		String sourcecode = "";
-		// WebDriver driver = new ChromeDriver();
+		//WebDriver driver = new ChromeDriver();
 		WebDriver driver = new FirefoxDriver();
 		driver.get(searchurl);
 		sourcecode = driver.getPageSource();
@@ -231,7 +231,7 @@ public class Crawler_3 {
 
 	public static Document getGoodsPageCode(String url) {
 		Document goods_doc = null;
-		// WebDriver driver = new ChromeDriver();
+		//WebDriver driver = new ChromeDriver();
 		WebDriver driver = new FirefoxDriver();
 		driver.get(url);
 		goods_doc = Jsoup.parse(driver.getPageSource());
@@ -253,10 +253,11 @@ public class Crawler_3 {
 			while (rs.next()) {
 				set.add(rs.getString(1));
 			}
-			rs = ps.executeQuery("select class_data,url from goods where isnull(class_name) or class_name='unknown_class' or class_name=''");
+			rs = ps.executeQuery("select class_data,url from goods where isnull(class_name) or class_name like '%(unclassfied)%' or class_name=''");
 			while (rs.next()) {
 				String s = rs.getString("class_data");
 				String url = rs.getString("url");
+				String flag = "";
 				for (String x : set) {
 					if (!x.contains("&")) {
 						while (s.contains("&") && s.contains("›")) {
@@ -265,10 +266,16 @@ public class Crawler_3 {
 					}
 					if (s.contains(x)) {
 						ps1.execute("update goods set class_name='" + x + "' where url='" + url + "'");
+						flag = "Y";
 						break;
 					}
 				}
-
+				if (!flag.equals("Y")){
+					while (s.contains("›")){
+						s = s.substring(s.indexOf("›") + 1) + "(unclassfied)";
+					}
+					ps1.execute("update goods set class_name='" + s + "' where url='" + url + "'");
+				}
 			}
 			ps1 = null;
 			DBUtil.closeConn(rs, ps, conn);
