@@ -29,21 +29,25 @@ public class Crawler_3 {
 	private static Dao dao = new Dao();
 
 	public static void main(String[] args) {
+		//chrome浏览器的驱动设置
 		// System.setProperty("webdriver.chrome.driver",
 		// "C:\\chromedriver.exe");
-		// 鑾峰彇鎼滅储缃戠珯鐨凩ist
+		//统计变量，用来计算程序运行的次数
 		int round = 0;
+		//死循环，保证程序一直运行
 		while (true) {
+			//获取存放抓取网站的信息
 			List<Host_configure> host_configure = dao.getHostConfigure();
+			//数据库连接设置
 			ResultSet rs = null;
 			PreparedStatement pstmt = null;
 			Connection conn = null;
-			// 杩炴帴info_rob鏁版嵁搴�
+			// 连接info_rob数据库
 			conn = DBUtil.getConn("info_rob");
 
+			//获取抓取配置信息
 			String sql = "select * from class_detail where crawl_depth = '2'";
-			// String keyword = "";
-			// 瀛樻斁class_details琛ㄦ牸3/5鍒楃殑鍐呭顔�
+			// map存放class_details 3/5列的内容
 			Map<String, String> map = new HashMap<String, String>();
 			try {
 				pstmt = conn.prepareStatement(sql);
@@ -51,64 +55,62 @@ public class Crawler_3 {
 				while (rs.next()) {
 					map.put(rs.getString(3), rs.getString(5));
 				}
-				// 鑾峰彇棣栨鎶撳彇鐨勫叧閿瘝
+				// 存放需要抓取的关键词
 				String keyword = getKeyword();
-				// 鎼滅储鍏抽敭璇嶇殑寰幆
+				// 抓取的关键词循环
 				while (!keyword.equals("")) {
-					// 鎼滅储缃戠珯鐨勫惊鐜�
+					// 抓取网站的循环
 					for (int i = 0; i < host_configure.size(); i++) {
 						// WebDriver driver = new ChromeDriver();
-						// 鍚姩FireFox
+						// 建立FireFox浏览器的驱动
 						WebDriver driver = new FirefoxDriver();
-						// 瀛楃涓叉嫾鍑烘煡璇㈠晢鍝佺殑url
+						// 字符串拼出抓取的关键词的网页的url
 						String url = host_configure.get(i).getSearch_box_url() + keyword;
-						// 璺宠浆鍒板晢鍝佺殑url
+						// 浏览器跳转到url
 						driver.get(url);
-						// 浣跨敤Selenium鑾峰彇缃戦〉鐨勬簮浠ｇ爜锛屽苟瀛樺偍涓篔soup鐨凞ocument绫诲瀷
+						// 使用Selenium集成的getPageSource()方法获取网页的源代码，并使用Jsoup转为Document类型，方便解析
 						Document doc0 = Jsoup.parse(driver.getPageSource());
-						// 閫氳繃Jsoup鐨勯�夋嫨鍣紝閫夋嫨鍑虹炕椤电殑鏍囩
+						// 使用Jsoup解析出翻页的元素
 						Element nextpage = doc0.select("a[id=pagnNextLink]").first();
-						// 缁熻鎶撳彇鍒扮殑鍟嗗搧鐨勬暟閲�
+						// 该变量用来统计抓取商品的数量
 						int good_amount = 1;
-						// 缈婚〉
+						// 翻页循环
 						while (!(nextpage == null || nextpage.toString().equals(""))) {
-							// 璺宠浆鍒板晢鍝佺殑椤甸潰
+							// 浏览器跳转到搜索结果页面
 							driver.get(url);
-							// 鑾峰彇鍟嗗搧椤甸潰鐨勬簮浠ｇ爜
+							// 使用Selenium集成的getPageSource()方法获取网页的源代码，并使用Jsoup转为Document类型，方便解析
 							Document doc = Jsoup.parse(driver.getPageSource());
-							// 绉婚櫎椤甸潰鐨刯s浠ｇ爜
-							// doc.select("script").remove();
-							// 閫氳繃select閫夋嫨鍣紝閫夋嫨鍑烘煡璇㈠埌鍟嗗搧鐨勫垪琛�
+							// 解析出每个商品的具体信息
 							Elements es = doc.select("ul[id=s-results-list-atf]>li");
-							// 鑾峰彇缈婚〉鏍囪瘑
+							// 解析出翻页的元素
 							nextpage = doc.select("a[id=pagnNextLink]").first();
-							// 鍒ゆ柇缈婚〉鏍囪瘑鏄惁涓虹┖锛屼互纭畾鏄惁鍒拌揪鏈�鍚庝竴椤�
+							// 判断是否包含翻页元素，确定是否是最后一页
 							if (!(nextpage == null || nextpage.toString().equals(""))) {
-								// 鎴彇缈婚〉鍚庣殑椤甸潰鐨剈rl
+								// 字符串分割出下一页的url
 								url = nextpage.toString().split("href=\"")[1].split("\"")[0];
-								// 瀛楃涓叉嫾鍑戝嚭缈婚〉鍚庣殑url
+								// 拼出完整的url，为翻页浏览器跳转做准备
 								url = "http://www.amazon.com" + url;
 							}
-							// 瀛樻斁鍟嗗搧鐨剈rl鐨勮凯浠ｅ櫒
+							// 商品列表的迭代器
 							Iterator<Element> listIterator = es.iterator();
-							// 涓存椂瀛楃涓�
+							// 临时变量
 							String temp = "";
-							// 瀛樻斁鍟嗗搧椤甸潰鐨剈rl
+							// 存放每个具体商品的url
 							String goods_url = "";
 							// WebDriver goods_driver = new ChromeDriver();
-							// 寮�鍚疐ireFox鎵撳紑鍟嗗搧椤甸潰
+							// 创建新的浏览器用于开启商品的详情页面
 							WebDriver goods_driver = new FirefoxDriver();
-							// 寰幆鑾峰彇杩唬鍣ㄤ腑鐨勫晢鍝�
+							// 具体商品循环
 							while (listIterator.hasNext()) {
-								// 鐢ㄤ簬鑾峰彇鍟嗗搧鐨刬mg_url鍜寀rl鐨勮凯浠ｅ櫒
+								// 为获取商品的img_url和url做准备
 								Element e = listIterator.next();
-								// 瀛樻斁鍟嗗搧淇℃伅鐨凪ap
+								// 声明商品的map
 								Map<String, String> goods_map = new HashMap<String, String>();
 								temp = e.getElementsByAttribute("href").toString();
 								if (temp.contains("href=\"")) {
-									// 鎴彇鍑哄晢鍝佺殑url
+									//截取出商品的url
 									goods_url = temp.split("href=\"")[1].split("\"")[0];
-
+									//判断是否是合法的url
 									if ((goods_url.startsWith("http://") || goods_url.startsWith("https://"))
 											&& baohan(goods_url, keyword)) {
 										System.out.println(
@@ -123,30 +125,29 @@ public class Crawler_3 {
 										System.out.println("");
 										System.out.println("the goods url is " + goods_url);
 										System.out.println("\n\n");
-										// 瀛樻斁鍟嗗搧鍥剧墖鐨剈rl
+										// 解析出商品的img_url
 										String img_url = e.select("img[src]").first().toString();
 										System.out.println("the goods img_url is " + img_url);
 										System.out.println("\n\n");
-										// 鍒嗗壊鍑篿mg_url
+										// 分割出商品的img_url
 										img_url = img_url.split("src=\"")[1].split("\"")[0];
 
 										// 寤舵椂璁剧疆
 										// java.util.concurrent.TimeUnit.SECONDS.sleep((int)
 										// (Math.random() * 3 + 2));
 
-										// 璺宠浆鍒板晢鍝佽鎯呴〉闈�
+										// 浏览器跳转到商品的详情页面
 										goods_driver.navigate().to(goods_url);
-										// 鑾峰彇鍟嗗搧璇︽儏椤甸潰鐨勬簮浠ｇ爜
+										// 获取商品详情页面的源代码
 										String goodssrc = goods_driver.getPageSource();
-										// 灏嗘簮浠ｇ爜瀛樺偍涓篋ocument绫诲瀷
+										// 将商品详情页面的源代码转为Document类型
 										Document doc_goods = Jsoup.parse(goodssrc);
 
-										// goods_map.clear();
-										// 鑾峰彇鍟嗗搧璇︽儏锛屽苟瀛樻斁鍒癕ap涓�
+										// 将商品页面的商品detail存储到商品的map中
 										goods_map = getDetail(map, doc_goods, keyword);
-										// 鍚憁ap涓殑src閿�硷紝璧嬪��
+										// 向商品map中添加商品页面的源代码
 										goods_map.put("src", goodssrc);
-										// 鑾峰彇鍟嗗搧鐨勭姸鍐碉紙鏂版棫鍟嗗搧锛�
+										// 获取商品的新旧状况，并存放到goods_map中
 										if (goods_map.get("condition") != null) {
 											if (goods_map.get("condition").contains("new"))
 												goods_map.put("condition", "used");
@@ -156,19 +157,20 @@ public class Crawler_3 {
 										} else {
 											goods_map.put("condition", "new");
 										}
-										// 灏嗗晢鍝佺殑鏍囬娣诲姞鍒板晢鍝佺殑璇︽儏涓幓
+										// 扩充商品的detail，将商品的title添加到detail中
 										goods_map.put("detail", goods_map.get("detail") + goods_map.get("title"));
-										// detail = detail.toUpperCase();
-										// 涓簃ap涓殑url閿�艰祴鍊�
+										// 将商品的url添加到goods_map
 										goods_map.put("url", goods_url);
-										// 涓簃ap涓殑img_url閿�艰祴鍊�
+										// 将商品的img_url添加到goods_map
 										goods_map.put("img_url", img_url);
 
+										//存放map的键
 										String s1 = "";
+										//存放map的值
 										String s2 = "";
-										// 鍟嗗搧Map鐨勮凯浠ｅ櫒
+										// 声明goods_map的迭代器
 										Iterator<Map.Entry<String, String>> entries = goods_map.entrySet().iterator();
-										// 閬嶅巻鍟嗗搧Map
+										// 循环
 										while (entries.hasNext()) {
 											Map.Entry<String, String> entry = entries.next();
 											if (entries.hasNext()) {
@@ -179,9 +181,9 @@ public class Crawler_3 {
 												s2 = s2 + "'" + entry.getValue().replaceAll("'", "''") + "'";
 											}
 										}
-										// 灏嗗晢鍝佽鎯呬腑鐨�"\"鏇挎崲涓�"\\"闃叉鎻掑叆鏁版嵁鐨勬椂鍊欏嚭閿�
+										// 将sql语句中的“\”替换为“\\”防止执行sql语句的时候报错
 										s2 = s2.replaceAll("\\\\", "\\\\\\\\");
-										// 鎻掑叆鏁版嵁
+										// 插入商品数据
 										try {
 											pstmt.execute("insert into goods" + "(" + s1 + ") value(" + s2 + ")");
 											System.out.println(
@@ -200,17 +202,20 @@ public class Crawler_3 {
 											// attribute has finished******");
 										} catch (Exception e2) {
 											// TODO: handle exception
+											//如果报错，将关键词的state字段设置为E
 											setERRORStatus(keyword);
 											e2.printStackTrace();
 										}
-										// 鍟嗗搧鏁伴噺鑷姞
+										// 统计商品数量的变量自加
 										good_amount++;
 									}
 								}
 							}
-							// 閫�鍑哄晢鍝侀〉闈㈢殑FireFox
+							// 关闭商品详情页面的FireFox
 							goods_driver.quit();
+							// 判断翻页元素是否可以点击
 							if (driver.findElement(By.id("pagnNextString")).isEnabled())
+								// 点击翻页元素实现翻页功能
 								driver.findElement(By.id("pagnNextString")).click();
 						}
 						System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -218,39 +223,43 @@ public class Crawler_3 {
 						System.out.println("         the keyword: " + keyword + " has finished              ");
 						System.out.println("^                                                          ^");
 						System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-						// 閫�鍑烘祻瑙堝櫒
+						// 关键词抓取完毕，退出FireFox浏览器
 						driver.quit();
 					}
-					// 灏嗗叧閿瘝鐨勭姸鎬佹洿鏂颁负"Y"
+					// 将关键词的state字段设置为Y，表明该关键词抓取完毕
 					pstmt.execute("UPDATE keyword SET state='Y' WHERE key_word = '" + keyword + "'");
 					// classification();
-					// 鑾峰彇鍏抽敭璇嶇敤浜庡垽鏂槸鍚︽湁鏂扮殑鍏抽敭璇嶉渶瑕佹姄鍙�
+					// 获取下一个需要抓取的关键词
 					keyword = getKeyword();
 				}
-				// 鍏抽棴鏁版嵁搴撹繛鎺�
+				// 关闭数据库连接
 				DBUtil.closeConn(rs, pstmt, conn);
 				System.out.println("\n\n\n");
 				System.out.println("$$$$$      WARNING:There is nothing to crawl!!!      $$$$$");
 				System.out.println("\n\n\n");
 			} catch (Exception e) {
 				e.printStackTrace();
-				// 鍏抽棴鏁版嵁搴撹繛鎺�
+				// 关闭数据库连接
 				DBUtil.closeConn(rs, pstmt, conn);
 			}
 			System.out.println("\n\n\n");
-			System.out.println("$$$$$      MESSAGE:Starting crawling price again      $$$$$");
+			System.out.println("$$$$$      MESSAGE:Start crawl price again      $$$$$");
 			System.out.println("\n\n\n");
 			try {
+				//抓取隐藏到购物车中的价格
 				getCartPrice(noPrice());
+				//抓取一些price价格不匹配的
 				getBuyboxPrice(noPrice());
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			//打印程序执行次数的信息
 			System.out.println("*********         round:" + round + "        **********");
 			System.out.println("--------------------------END--------------------------");
 			System.out.println("\n\n\n\n\n");
 			try {
+				//程序执行完1次，休眠2分钟，然后执行下一次
 				java.util.concurrent.TimeUnit.SECONDS.sleep(120);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -259,11 +268,21 @@ public class Crawler_3 {
 		}
 	}
 
+	
+	/**
+	 * 抓取隐藏到购物车中的价格
+	 * @param：未获取价格的商品的urlList
+	 * */
+	
+	
 	public static void getCartPrice(ArrayList<String> noprice_list) throws Exception {
+		// 声明FireFoxDriver
 		WebDriver driver = new FirefoxDriver();
+		// 数据库连接设置
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		Connection conn = null;
+		// 连接info_rob数据库
 		conn = DBUtil.getConn("info_rob");
 		By by = By.linkText("See price in cart");
 		for (int i = 0; i < noprice_list.size(); i++) {
@@ -284,7 +303,13 @@ public class Crawler_3 {
 		driver.quit();
 		DBUtil.closeConn(rs, pstmt, conn);
 	}
+	
+	
 
+	/**
+	 * 从网页右侧的BuyBox，抓取一些price价格不匹配的
+	 * @param：未获取价格的商品的urlList
+	 * */
 	public static void getBuyboxPrice(ArrayList<String> noprice_list) throws Exception {
 		String sql = "";
 		WebDriver driver = new FirefoxDriver();
@@ -338,7 +363,7 @@ public class Crawler_3 {
 		DBUtil.closeConn(rs, pstmt, conn);
 	}
 
-	// 鑾峰彇娌℃湁浠锋牸鐨勫晢鍝佺殑url锛岃繘琛屽娆″尮閰�
+	// 获取数据库中没有price的商品的url
 	public static ArrayList<String> noPrice() {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -362,7 +387,7 @@ public class Crawler_3 {
 		return noprice_list;
 	}
 
-	// 灏嗗叧閿瘝鍑洪敊鐨勭姸鎬佺疆涓�"E"
+	// 将keyword的state字段设置为E
 	public static void setERRORStatus(String keyword) {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -379,7 +404,7 @@ public class Crawler_3 {
 		DBUtil.closeConn(rs, pstmt, conn);
 	}
 
-	// 澶勭悊鍏抽敭璇嶄腑鍖呭惈20%鐨勭壒娈婃儏鍐�
+	// 处理关键词中包含20%的情况
 	public static boolean baohan(String url, String keyword) {
 		String split[] = null;
 		boolean flag = true;
@@ -396,6 +421,7 @@ public class Crawler_3 {
 		return flag;
 	}
 
+	// 获取商品的详细信息
 	public static Map<String, String> getDetail(Map<String, String> map, Document doc_goods, String key_word) {
 
 		Map<String, String> info_map = new HashMap<String, String>();
@@ -408,24 +434,24 @@ public class Crawler_3 {
 		return info_map;
 	}
 
-	// 鑾峰彇鎼滅储鍏抽敭璇� version2锛屽彧鑾峰彇1涓叧閿瘝
+	// 获取需要抓取的关键词
 	public static String getKeyword() {
 		String keyword = "";
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		Connection conn = null;
-		// 杩炴帴test鏁版嵁搴�
+		// 连接到info_rob数据库
 		conn = DBUtil.getConn("info_rob");
 		String sql = "select * from keyword where isnull(state) or state='' or state='E' or (state='R' and robot_name='"
 				+ getComputerName() + "')";
 		try {
 			pstmt = conn.prepareStatement("");
 			rs = pstmt.executeQuery(sql);
-			// 浠庢暟鎹簱涓幏鍙栦竴涓悳绱㈢殑鍏抽敭璇�
+			// 获取关键词
 			if (rs.next()) {
 				keyword = rs.getString(1);
 			}
-			// 鏇存柊鎼滅储鍏抽敭璇嶇殑鐘舵�侊紝鏂逛究鍚庣画鐨勫垽鏂�昏緫
+			// 更新数据库中关键词的状态
 			if (!keyword.equals("")) {
 				sql = "UPDATE keyword SET state='R',robot_name='" + getComputerName() + "' WHERE key_word = '" + keyword
 						+ "'";
@@ -435,11 +461,13 @@ public class Crawler_3 {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// 鍏抽棴鏁版嵁搴撹繛鎺�
+		// 关闭数据库的连接
 		DBUtil.closeConn(rs, pstmt, conn);
 		return keyword;
 	}
-
+	
+	
+	// 判断网页是否包含某个元素
 	public static boolean IsElementPresent(WebDriver driver, By by) {
 		try {
 			driver.findElement(by);
@@ -448,13 +476,14 @@ public class Crawler_3 {
 			return false;
 		}
 	}
-
+	
+	//获取计算机名称
 	public static String getComputerName() {
 		String computerName = System.getenv().get("COMPUTERNAME");
 		return computerName;
 	}
 
-	// 鍟嗗搧鍒嗙被浠ｇ爜
+	// 解析商品的分类
 	public static void classification() {
 		Connection conn = DBUtil.getConn("info_rob");
 		PreparedStatement ps = null;
